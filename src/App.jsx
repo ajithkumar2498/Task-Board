@@ -8,10 +8,10 @@ import { generateId } from "./Utils/data";
 
 const App = () => {
   const { tasks, setTasks } = useTaskStorage();
-  const showToast = useToast();
+   const { showToast = () => {} } = useToast() || {};
   const { filters, updateFilter } = useUrlFilters();
 
-  const [modalState, setModalState] = useState({ isOpen: false, task: null });
+ const [modalState, setModalState] = useState({ isOpen: false, task: null });
 
   // Derived state
   const filteredTasks = useMemo(() => {
@@ -26,7 +26,28 @@ const App = () => {
   }, [tasks, filters]);
 
   // Handlers
-  const handleSave = (taskData) => {
+  // const handleSave = (taskData) => {
+  //   const now = new Date().toISOString();
+
+  //   if (modalState.task) {
+  //     setTasks((prev) =>
+  //       prev.map((t) =>
+  //         t.id === modalState.task.id
+  //           ? { ...t, ...taskData, updatedAt: now }
+  //           : t
+  //       )
+  //     );
+  //     showToast("Task updated successfully");
+  //   } else {
+  //     setTasks((prev) => [
+  //       ...prev,
+  //       { ...taskData, id: generateId(), createdAt: now, updatedAt: now },
+  //     ]);
+  //     showToast("New task created");
+  //   }
+  //   setModalState({ isOpen: false, task: null });
+  // };
+ const handleSave = (taskData) => {
     const now = new Date().toISOString();
 
     if (modalState.task) {
@@ -45,9 +66,10 @@ const App = () => {
       ]);
       showToast("New task created");
     }
+
     setModalState({ isOpen: false, task: null });
   };
-
+  
   const handleDropTask = (taskId, newStatus) => {
     const task = tasks.find((t) => t.id === taskId);
     if (task && task.status !== newStatus) {

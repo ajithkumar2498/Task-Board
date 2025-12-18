@@ -6,6 +6,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
 
+//mock toast
+const mockShowToast = jest.fn();
+
+jest.mock("./hooks/UseToast", () => ({
+  useToast: () => ({
+    showToast: mockShowToast,
+  }),
+}));
+
+
 // 1. Mock LocalStorage
 const localStorageMock = (function() {
   let store = {};
@@ -32,16 +42,24 @@ const mockUrlParams = (searchString = '') => {
   window.history.replaceState({}, '', `/${searchString}`);
 };
 
+// Define mock function globally to ensure it's available
+
+
 describe('Team Workflow Board Integration Tests', () => {
-  // Define mock function for toast notifications
-  const mockShowToast = jest.fn();
+  
+  beforeAll(() => {
+    // Safety Net: Mock window.showToast and global.showToast in case App.jsx uses it globally
+    // Doing this in beforeAll ensures it's set up once.
+    window.showToast = mockShowToast;
+    global.showToast = mockShowToast;
+  });
 
   beforeEach(() => {
     localStorageMock.clear();
     mockUrlParams(); // Reset URL to root
     jest.clearAllMocks();
     
-    // Safety Net: Mock window.showToast in case App.jsx uses it globally
+    // Re-assign in case something cleared it
     window.showToast = mockShowToast;
   });
 
