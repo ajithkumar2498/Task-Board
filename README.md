@@ -1,69 +1,98 @@
-AK Task Board
+QuintBoard - Team Workflow Application
 
-A React-based task management board built to demonstrate clean architecture, reusable component design, and client-side persistence.
+A robust, accessible React application for managing team tasks, built with a custom component system and persistent local storage.
 
-Quick Start
+🚀 How to Run
 
-Install & Run:
+Install Dependencies
 
-npm install && npm start
+npm install
 
 
-Runs at Your local Driver.
+Start the Development Server
 
-Test:
+npm start
+
+
+The application will launch at http://localhost:3000.
+
+Run Tests
 
 npm test
 
 
-Launches the test runner in watch mode.
+This launches the Jest test runner in watch mode.
 
-🏗 Architecture
----------------
+🏗 Architecture Overview
 
-I organized the codebase to strictly separate the UI components from the business logic.
+Project Structure
+
+I organized the codebase to strictly separate the presentational UI from the business logic and data persistence.
 
 src/
-├── components/     # UI Layer (Atomic components & Layouts)
-├── hooks/          # Logic Layer (Persistence, Filter state, Toasts)
-├── Utils/          # Helpers & Constants
+├── components/     # UI Layer (Atomic components like Button, Input, Modal)
+├── hooks/          # Logic Layer (Data persistence, Filter state, Toast context)
+├── Utils/          # Helpers (Date formatters, Constants)
 ├── App.jsx         # Composition Root
 └── App.test.jsx    # Integration Tests
 
+Key Architectural Decisions
+1. State Management (Hooks vs. Redux)
 
-Key Decisions
--------------
+Decision: I chose native React useState combined with custom hooks (useTaskStorage) instead of a library like Redux.
 
-State Management: I stuck with native React state (useState + Custom Hooks) instead of Redux. For an app of this size, external libraries add complexity without much benefit. I did use Context, but only for the ToastProvider to prevent prop-drilling notification methods.
+Rationale: For an application of this specific scope, external state libraries introduce unnecessary boilerplate and bundle size. Custom hooks provided a clean abstraction for data manipulation without the overhead.
 
-Persistence & Migrations: Since we're using localStorage without a backend, I wrote a useTaskStorage hook that handles data fetching. I also added a version check on load—if the stored data is from an older schema version, it automatically "migrates" it (e.g., adds missing fields) before the app renders to prevent crashes.
+Context: I restricted the use of the Context API to global UI states (like the ToastProvider) to avoid prop-drilling notification methods, keeping the data flow for tasks explicit and traceable.
 
-Component Composition: The UI components (like Modal and Card) use a composition pattern (children props) rather than config objects. This makes them much easier to extend or restyle later.
+2. Component Design (Composition)
 
-Technical Notes
----------------
+Decision: The design system components (Modal, Card, Button) rely on the Composition pattern (passing children) rather than complex configuration objects.
 
-Storage Migration Strategy
+Rationale: This makes the components highly reusable and easier to maintain. For example, the Modal doesn't know about "Tasks"—it just renders whatever content is passed to it, allowing it to be used for other features later.
 
-To support future features without breaking existing users, the storage logic tracks a SCHEMA_VERSION.
+3. Data Layer (Schema Migration Strategy)
 
-Check: On load, the app compares the stored data version against the code's version.
+Decision: I implemented a "Schema Migration" system within the useTaskStorage hook.
 
-Migrate: If the stored data is older (e.g., missing the new tags array), it passes the data through a migration function to backfill defaults.
+Rationale: Since we are using localStorage (which persists across deployments), a code update that changes the data shape (e.g., adding a tags array) would crash the app for existing users.
 
-Save: The updated data is saved back to storage immediately.
+Implementation: On app load, the system checks the stored version. If it is lower than the current SCHEMA_VERSION, it runs a migration function to backfill missing fields (e.g., initializing tags: []) before the UI renders.
 
-Refactoring Story: The "Uncontrolled Input" Bug
+⚠️ Known Limitations & Trade-offs
+Drag & Drop (HTML5 API):
 
-During the build, I hit the classic React warning: "A component is changing an uncontrolled input to be controlled."
+Trade-off: I used the native HTML5 Drag and Drop API to keep the project lightweight and dependency-free.
 
-It turned out my TaskForm state was initializing fields like description to undefined if they weren't passed in the props. This made the inputs uncontrolled on mount, but controlled as soon as I typed.
+Limitation: Native DnD has poor support on mobile/touch devices. If this were a production mobile app, I would refactor to use dnd-kit.
 
-The Fix: I refactored the useState initialization to explicitly merge the incoming props with a default object (e.g., { description: '' }). This ensures every input always has a defined string value from the very first render, effectively solving the stability issue.
+Rendering Performance:
 
-Current Limitations
--------------------
+Trade-off: The entire board re-renders when task state changes.
 
-Drag & Drop: I used the native HTML5 API for performance and zero dependencies. However, this doesn't support touch devices well; for a production mobile app, I'd swap this for dnd-kit.
+Limitation: This is performant for <500 tasks. For a larger dataset, I would implement list virtualization (using react-window) and React.memo for individual cards to prevent UI lag.
 
-Rendering: The board re-renders fully on updates. This is fine for hundreds of tasks, but for thousands, I'd optimize using react-window virtualization.
+Browser Storage:
+
+Limitation: localStorage is synchronous and limited to ~5MB. IndexedDB would be the scalable choice for a production app requiring rich text or image attachments.
+
+AI Assistance Disclosure
+Per the assignment requirements, I utilized AI tools (Gemini 2.5) to accelerate development in the following areas:
+
+1. Boilerplate & Configuration:
+
+Usage: Generated the initial Tailwind CSS class structures and the Jest/Babel configuration files.
+
+Modification: I had to manually debug and adjust the Babel config to support the automatic JSX runtime ("runtime": "automatic") to fix test environment errors.
+
+2. Test Scaffolding:
+
+Usage: Generated the skeleton for the integration tests (App.test.jsx).
+
+Modification: The initial AI test mocks for localStorage were incomplete. I rewrote the mock implementation to properly simulate storage events and added the specific logic to test the "Search Filter" behavior.
+
+3. Accessibility (A11y):
+
+Usage: Consulted AI for a checklist of necessary ARIA attributes.
+
+Modification: The AI suggestion was generic. I manually implemented the useId logic in my Input components to ensure unique label-to-input associations and added the keydown event listeners to the Modal for Escape-key closure.
