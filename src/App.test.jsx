@@ -33,9 +33,9 @@ const mockUrlParams = (searchString = '') => {
 };
 
 describe('Team Workflow Board Integration Tests', () => {
-  // Define the mock function for the toast notification
+  // Define mockShowToast here so it's available for all tests
   const mockShowToast = jest.fn();
-  
+
   beforeEach(() => {
     localStorageMock.clear();
     mockUrlParams(); // Reset URL to root
@@ -43,11 +43,11 @@ describe('Team Workflow Board Integration Tests', () => {
   });
 
   test('Core Workflow: User can create a new task and see it on the board', async () => {
-    // FIX 1: Pass the mockShowToast prop to the component
+    // FIX 1: Pass showToast prop to prevent crash on save
     render(<App showToast={mockShowToast} />);
 
     // 1. Open Modal
-    // FIX 2: Use getByRole to strictly select the button, ignoring the header text match
+    // FIX 2: Use getByRole to strictly find the BUTTON, not the modal header
     const newTaskBtn = screen.getByRole('button', { name: /New Task/i });
     fireEvent.click(newTaskBtn);
 
@@ -65,31 +65,34 @@ describe('Team Workflow Board Integration Tests', () => {
     const saveBtn = screen.getByText('Save Task');
     fireEvent.click(saveBtn);
 
-    // 4. Assert: Modal closes and task appears
+    // 4. Assert: Modal closes
     await waitFor(() => {
       expect(screen.queryByText('Create New Task')).not.toBeInTheDocument();
     });
 
-    // Verify task content is visible on the board
+    // 5. Verify task content is visible on the board
     expect(screen.getByText('Critical Release Bug')).toBeInTheDocument();
     expect(screen.getByText('QA Team')).toBeInTheDocument();
+    
+    // 6. Verify toast was called
+    expect(mockShowToast).toHaveBeenCalledWith(expect.stringMatching(/created/i));
   });
 
   test('UI Behavior: Search filter correctly hides non-matching tasks', async () => {
-    // FIX 1: Pass the mockShowToast prop
+    // FIX 1: Pass showToast prop
     render(<App showToast={mockShowToast} />);
 
     // --- SETUP: Create two distinct tasks ---
     
     // Task 1: "Fix Login"
-    // FIX 2: Use specific button selector
+    // FIX 2: Use getByRole for button
     fireEvent.click(screen.getByRole('button', { name: /New Task/i }));
     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Fix Login' } });
     fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'Dev A' } });
     fireEvent.click(screen.getByText('Save Task'));
 
     // Task 2: "Update CSS"
-    // FIX 2: Use specific button selector
+    // FIX 2: Use getByRole for button
     fireEvent.click(screen.getByRole('button', { name: /New Task/i }));
     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Update CSS' } });
     fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'Dev B' } });
@@ -111,16 +114,16 @@ describe('Team Workflow Board Integration Tests', () => {
   });
 
   test('UI Behavior: Priority filter updates URL and filters tasks', async () => {
-    // FIX 1: Pass the mockShowToast prop
+    // FIX 1: Pass showToast prop
     render(<App showToast={mockShowToast} />);
 
     // Setup: Create a High Priority task
-    // FIX 2: Use specific button selector
+    // FIX 2: Use getByRole for button
     fireEvent.click(screen.getByRole('button', { name: /New Task/i }));
     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'High Priority Task' } });
     fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'Manager' } });
     
-    // Select "High" priority
+    // Select "High" priority in Form
     const prioritySelects = screen.getAllByLabelText(/Priority/i);
     const formPrioritySelect = prioritySelects[prioritySelects.length - 1]; 
     fireEvent.change(formPrioritySelect, { target: { value: 'High' } });
@@ -128,11 +131,12 @@ describe('Team Workflow Board Integration Tests', () => {
     fireEvent.click(screen.getByText('Save Task'));
 
     // Setup: Create a Low Priority task
-    // FIX 2: Use specific button selector
+    // FIX 2: Use getByRole for button
     fireEvent.click(screen.getByRole('button', { name: /New Task/i }));
     fireEvent.change(screen.getByLabelText(/Title/i), { target: { value: 'Low Priority Task' } });
     fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'Intern' } });
     
+    // Select "Low" priority in Form
     const prioritySelects2 = screen.getAllByLabelText(/Priority/i);
     const formPrioritySelect2 = prioritySelects2[prioritySelects2.length - 1];
     fireEvent.change(formPrioritySelect2, { target: { value: 'Low' } });
@@ -140,6 +144,7 @@ describe('Team Workflow Board Integration Tests', () => {
     fireEvent.click(screen.getByText('Save Task'));
 
     // --- ACTION: Change Filter Bar Priority ---
+    // The filter bar is usually the first "Priority" select or identified by current value
     const filterSelect = screen.getByDisplayValue('All Priorities');
     fireEvent.change(filterSelect, { target: { value: 'High' } });
 
