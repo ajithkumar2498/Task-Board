@@ -16,7 +16,7 @@ export const BoardColumn = ({ status, tasks, onEdit, onDropTask }) => {
       onDragLeave={() => setIsOver(false)}
       onDrop={handleDrop}
     >
-      <div className={`p-3 border-b flex items-center justify-between rounded-t-xl ${STATUSES[status].color}`}>
+      <div className={`p-3 border-b flex items-center justify-between rounded-t-2xl ${STATUSES[status].color}`}>
         <h3 className="font-semibold text-gray-700 flex items-center gap-2">{status}<span className="bg-white/50 px-2 py-0.5 rounded text-sm text-gray-600">{tasks.length}</span></h3>
       </div>
       <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[150px]">
