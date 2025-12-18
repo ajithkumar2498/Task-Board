@@ -33,21 +33,23 @@ const mockUrlParams = (searchString = '') => {
 };
 
 describe('Team Workflow Board Integration Tests', () => {
-  // Define mockShowToast here so it's available for all tests
+  // Define mock function for toast notifications
   const mockShowToast = jest.fn();
 
   beforeEach(() => {
     localStorageMock.clear();
     mockUrlParams(); // Reset URL to root
     jest.clearAllMocks();
+    
+    // Safety Net: Mock window.showToast in case App.jsx uses it globally
+    window.showToast = mockShowToast;
   });
 
   test('Core Workflow: User can create a new task and see it on the board', async () => {
-    // FIX 1: Pass showToast prop to prevent crash on save
+    // FIX 1: Pass showToast prop
     render(<App showToast={mockShowToast} />);
 
-    // 1. Open Modal
-    // FIX 2: Use getByRole to strictly find the BUTTON, not the modal header
+    // FIX 2: Use getByRole to specifically target the BUTTON, ignoring the "Create New Task" header
     const newTaskBtn = screen.getByRole('button', { name: /New Task/i });
     fireEvent.click(newTaskBtn);
 
@@ -65,7 +67,7 @@ describe('Team Workflow Board Integration Tests', () => {
     const saveBtn = screen.getByText('Save Task');
     fireEvent.click(saveBtn);
 
-    // 4. Assert: Modal closes
+    // 4. Assert: Modal closes and task appears
     await waitFor(() => {
       expect(screen.queryByText('Create New Task')).not.toBeInTheDocument();
     });
@@ -124,6 +126,7 @@ describe('Team Workflow Board Integration Tests', () => {
     fireEvent.change(screen.getByLabelText(/Assignee/i), { target: { value: 'Manager' } });
     
     // Select "High" priority in Form
+    // Note: Finding the specific select inside the modal
     const prioritySelects = screen.getAllByLabelText(/Priority/i);
     const formPrioritySelect = prioritySelects[prioritySelects.length - 1]; 
     fireEvent.change(formPrioritySelect, { target: { value: 'High' } });
