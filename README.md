@@ -1,4 +1,4 @@
-> AkBoard - Team Workflow Application 📋
+# AkBoard - Team Workflow Application 📋
 
 A robust, accessible React application for managing team tasks, built with a custom component system and persistent local storage.
 
